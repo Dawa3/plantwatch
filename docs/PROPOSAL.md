@@ -1,6 +1,6 @@
 # Proposal checkpoint: PlantWatch (Option 14, Industrial IoT and Predictive Maintenance)
 
-**Team.** Individual project: **[your name]** covers the network, platform and validation roles.
+**Team.** Individual project: Dawa Sherpa covers the network, platform and validation roles.
 
 **Purpose.** Collect machine telemetry from a plant floor, store it in Redis in a
 separate network, raise predictive-maintenance alerts, and measure how the network
