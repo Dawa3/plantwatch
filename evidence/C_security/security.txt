@@ -1,0 +1,312 @@
+PlantWatch - Module C: network security
+Generated: 2026-11-15T16:32:14.121-0600   Host kernel: 6.6.87.2-microsoft-standard-WSL2
+
+==================== Ruleset: data-centre router pw-r2 (forward policy drop) ====================
+table inet pw {
+	counter allow_https {
+		packets 33 bytes 1980
+	}
+
+	counter allow_iperf {
+		packets 0 bytes 0
+	}
+
+	counter allow_api_db {
+		packets 37 bytes 2220
+	}
+
+	counter allow_icmp {
+		packets 10 bytes 792
+	}
+
+	counter deny_to_data {
+		packets 7 bytes 492
+	}
+
+	counter deny_other {
+		packets 3 bytes 204
+	}
+
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		ct state established,related accept
+		ct state invalid drop
+		iifname "r2-wan" oifname "r2-app" ip saddr { 10.14.1.0/24, 10.14.4.0/24 } ip daddr 10.14.2.10 tcp dport 8443 counter name "allow_https" accept
+		iifname "r2-wan" oifname "r2-app" ip saddr 10.14.1.0/24 ip daddr 10.14.2.10 tcp dport 5201 counter name "allow_iperf" accept
+		iifname "r2-app" oifname "r2-data" ip saddr 10.14.2.10 ip daddr 10.14.3.10 tcp dport 6379 counter name "allow_api_db" accept
+		ip saddr { 10.14.1.0/24, 10.14.4.0/24 } ip daddr 10.14.2.0/24 icmp type echo-request counter name "allow_icmp" accept
+		ip saddr 10.14.4.0/24 ip daddr 10.14.3.0/24 icmp type echo-request counter name "allow_icmp" accept
+		ip daddr 10.14.3.0/24 counter name "deny_to_data" reject with icmpx admin-prohibited
+		counter name "deny_other" reject with icmpx admin-prohibited
+	}
+
+	chain input {
+		type filter hook input priority filter; policy drop;
+		iifname "lo" accept
+		ct state established,related accept
+		icmp type echo-request accept
+		counter packets 0 bytes 0 drop
+	}
+}
+
+==================== Ruleset: edge router pw-r1 ====================
+table inet pw {
+	counter deny_spoof {
+		packets 0 bytes 0
+	}
+
+	counter deny_plant_to_ops {
+		packets 3 bytes 252
+	}
+
+	chain forward {
+		type filter hook forward priority filter; policy accept;
+		iifname "r1-plant" ip saddr != 10.14.1.0/24 counter name "deny_spoof" drop
+		iifname "r1-ops" ip saddr != 10.14.4.0/24 counter name "deny_spoof" drop
+		ct state established,related accept
+		iifname "r1-plant" oifname "r1-ops" counter name "deny_plant_to_ops" reject with icmpx admin-prohibited
+	}
+}
+
+==================== Ruleset: Redis host firewall pw-db ====================
+table inet pw {
+	counter allow_redis_from_api {
+		packets 37 bytes 2220
+	}
+
+	counter deny_db_input {
+		packets 0 bytes 0
+	}
+
+	chain input {
+		type filter hook input priority filter; policy drop;
+		iifname "lo" accept
+		ct state established,related accept
+		ip saddr 10.14.2.10 tcp dport 6379 counter name "allow_redis_from_api" accept
+		icmp type echo-request accept
+		counter name "deny_db_input" drop
+	}
+}
+
+==================== Counters before the tests (pw-r2) ====================
+table inet pw {
+	counter allow_https {
+		packets 33 bytes 1980
+	}
+	counter allow_iperf {
+		packets 0 bytes 0
+	}
+	counter allow_api_db {
+		packets 37 bytes 2220
+	}
+	counter allow_icmp {
+		packets 10 bytes 792
+	}
+	counter deny_to_data {
+		packets 7 bytes 492
+	}
+	counter deny_other {
+		packets 3 bytes 204
+	}
+}
+
+==================== TLS: what the client negotiates with the API ====================
+$ plant sh -c openssl s_client -connect 10.14.2.10:8443 -servername api.plantwatch.lab -CAfile /home/ang23_/plantwatch/run/certs/ca.pem -brief </dev/null
+CONNECTION ESTABLISHED
+Protocol version: TLSv1.3
+Ciphersuite: TLS_AES_256_GCM_SHA384
+Peer certificate: O = PlantWatch Lab, CN = api.plantwatch.lab
+Hash used: SHA256
+Signature type: RSA-PSS
+Verification: OK
+Server Temp Key: X25519, 253 bits
+DONE
+[exit 0]
+
+Server certificate:
+subject=O = PlantWatch Lab, CN = api.plantwatch.lab
+issuer=O = PlantWatch Lab, CN = PlantWatch Lab CA
+notBefore=Nov 15 22:24:25 2026 GMT
+notAfter=Nov 15 22:24:25 2027 GMT
+X509v3 Subject Alternative Name: 
+    DNS:api.plantwatch.lab, IP Address:10.14.2.10
+
+==================== ALLOWED: plant -> API over TLS, certificate verified against the lab CA ====================
+$ plant curl -sS -v --noproxy * --cacert /home/ang23_/plantwatch/run/certs/ca.pem https://api.plantwatch.lab:8443/health
+* Host api.plantwatch.lab:8443 was resolved.
+* IPv6: (none)
+* IPv4: 10.14.2.10
+*   Trying 10.14.2.10:8443...
+* Connected to api.plantwatch.lab (10.14.2.10) port 8443
+* ALPN: curl offers h2,http/1.1
+} [5 bytes data]
+* TLSv1.3 (OUT), TLS handshake, Client hello (1):
+} [512 bytes data]
+*  CAfile: /home/ang23_/plantwatch/run/certs/ca.pem
+*  CApath: /etc/ssl/certs
+{ [5 bytes data]
+* TLSv1.3 (IN), TLS handshake, Server hello (2):
+{ [122 bytes data]
+* TLSv1.3 (IN), TLS handshake, Encrypted Extensions (8):
+{ [6 bytes data]
+* TLSv1.3 (IN), TLS handshake, Certificate (11):
+{ [934 bytes data]
+* TLSv1.3 (IN), TLS handshake, CERT verify (15):
+{ [264 bytes data]
+* TLSv1.3 (IN), TLS handshake, Finished (20):
+{ [52 bytes data]
+* TLSv1.3 (OUT), TLS change cipher, Change cipher spec (1):
+} [1 bytes data]
+* TLSv1.3 (OUT), TLS handshake, Finished (20):
+} [52 bytes data]
+* SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384 / X25519 / RSASSA-PSS
+* ALPN: server did not agree on a protocol. Uses default.
+* Server certificate:
+*  subject: O=PlantWatch Lab; CN=api.plantwatch.lab
+*  start date: Nov 15 22:24:25 2026 GMT
+*  expire date: Nov 15 22:24:25 2027 GMT
+*  subjectAltName: host "api.plantwatch.lab" matched cert's "api.plantwatch.lab"
+*  issuer: O=PlantWatch Lab; CN=PlantWatch Lab CA
+*  SSL certificate verify ok.
+*   Certificate level 0: Public key type RSA (2048/112 Bits/secBits), signed using sha256WithRSAEncryption
+*   Certificate level 1: Public key type RSA (2048/112 Bits/secBits), signed using sha256WithRSAEncryption
+* using HTTP/1.x
+} [5 bytes data]
+> GET /health HTTP/1.1
+> Host: api.plantwatch.lab:8443
+> User-Agent: curl/8.5.0
+> Accept: */*
+> 
+{ [5 bytes data]
+* TLSv1.3 (IN), TLS handshake, Newsession Ticket (4):
+{ [233 bytes data]
+* TLSv1.3 (IN), TLS handshake, Newsession Ticket (4):
+{ [233 bytes data]
+* old SSL session ID is stale, removing
+{ [5 bytes data]
+< HTTP/1.1 200 OK
+< date: Sun, 15 Nov 2026 22:32:14 GMT
+< server: uvicorn
+< content-length: 45
+< content-type: application/json
+< x-request-id: 86ba689182fe
+< x-app-ms: 0.362
+< x-db-ms: 0.191
+< 
+{ [5 bytes data]
+* Connection #0 to host api.plantwatch.lab left intact
+{"status":"ok","redis":"up","redis_ms":0.195}[exit 0]
+
+
+==================== DENIED: plant -> Redis directly (bypassing the API) ====================
+$ plant nc -vz -w 3 10.14.3.10 6379
+nc: connect to 10.14.3.10 port 6379 (tcp) failed: No route to host
+[exit 1]
+
+$ plant ping -c 2 -W 1 10.14.3.10
+PING 10.14.3.10 (10.14.3.10) 56(84) bytes of data.
+From 10.14.0.2 icmp_seq=1 Packet filtered
+From 10.14.0.2 icmp_seq=2 Packet filtered
+
+--- 10.14.3.10 ping statistics ---
+2 packets transmitted, 0 received, +2 errors, 100% packet loss, time 1022ms
+
+[exit 1]
+
+
+==================== DENIED: TLS client that does not trust the lab CA ====================
+$ plant curl -sS --noproxy * -m 5 https://api.plantwatch.lab:8443/health
+curl: (60) SSL certificate problem: unable to get local issuer certificate
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the web page mentioned above.
+[exit 60]
+
+
+==================== DENIED: plain HTTP to the TLS port ====================
+$ plant curl -sS --noproxy * -m 5 http://api.plantwatch.lab:8443/health
+curl: (52) Empty reply from server
+[exit 52]
+
+
+==================== DENIED: Redis without the password, even from the permitted API host ====================
+$ api redis-cli -h 10.14.3.10 ping
+NOAUTH Authentication required.
+
+[exit 0]
+
+
+==================== Pass/fail summary of the policy ====================
+  PASS  (works)   plant -> API tcp/8443 HTTPS (verified)
+  PASS  (works)   ops   -> API tcp/8443 HTTPS (verified)
+  PASS  (works)   API   -> Redis tcp/6379 with password
+  PASS  (blocked) plant -> Redis tcp/6379
+  PASS  (blocked) plant -> Redis ICMP
+  PASS  (blocked) ops   -> Redis tcp/6379
+  PASS  (blocked) plant -> API tcp/22 (not in policy)
+  PASS  (blocked) plant -> API tcp/6379 (not in policy)
+  PASS  (blocked) plant -> ops zone (blocked at pw-r1)
+  PASS  (blocked) API without CA trust (certificate rejected)
+  PASS  (blocked) plain HTTP on tcp/8443
+  PASS  (blocked) Redis without password from API host
+
+==================== Counters after the tests (pw-r2): allow_* and deny_* both increased ====================
+table inet pw {
+	counter allow_https {
+		packets 41 bytes 2460
+	}
+	counter allow_iperf {
+		packets 0 bytes 0
+	}
+	counter allow_api_db {
+		packets 40 bytes 2400
+	}
+	counter allow_icmp {
+		packets 10 bytes 792
+	}
+	counter deny_to_data {
+		packets 13 bytes 924
+	}
+	counter deny_other {
+		packets 7 bytes 444
+	}
+}
+
+==================== Counters after the tests (pw-r1) ====================
+table inet pw {
+	counter deny_spoof {
+		packets 0 bytes 0
+	}
+	counter deny_plant_to_ops {
+		packets 4 bytes 336
+	}
+}
+
+==================== Packet evidence from /home/ang23_/plantwatch/evidence/C_security/r2_wan_security.pcap ====================
+--- denied flow: SYN to Redis answered by the router with ICMP admin-prohibited
+2026-11-15 16:32:14.161732 IP 10.14.1.10.38010 > 10.14.3.10.6379: Flags [S], seq 4242242633, win 64240, options [mss 1460,sackOK,TS val 1838878661 ecr 0,nop,wscale 7], length 0
+2026-11-15 16:32:14.161743 IP 10.14.0.2 > 10.14.1.10: ICMP host 10.14.3.10 unreachable - admin prohibited filter, length 68
+2026-11-15 16:32:14.163752 IP 10.14.1.10 > 10.14.3.10: ICMP echo request, id 21418, seq 1, length 64
+2026-11-15 16:32:14.163760 IP 10.14.0.2 > 10.14.1.10: ICMP host 10.14.3.10 unreachable - admin prohibited filter, length 92
+2026-11-15 16:32:15.189031 IP 10.14.1.10 > 10.14.3.10: ICMP echo request, id 21418, seq 2, length 64
+2026-11-15 16:32:15.189077 IP 10.14.0.2 > 10.14.1.10: ICMP host 10.14.3.10 unreachable - admin prohibited filter, length 92
+2026-11-15 16:32:15.243034 IP 10.14.1.10.38020 > 10.14.3.10.6379: Flags [S], seq 699736840, win 64240, options [mss 1460,sackOK,TS val 1838879742 ecr 0,nop,wscale 7], length 0
+2026-11-15 16:32:15.243042 IP 10.14.0.2 > 10.14.1.10: ICMP host 10.14.3.10 unreachable - admin prohibited filter, length 68
+
+--- allowed flow: TCP handshake + TLS records on tcp/8443 (first packets)
+2026-11-15 16:32:14.137027 IP 10.14.1.10.33148 > 10.14.2.10.8443: Flags [S], seq 2536200546, win 64240, options [mss 1460,sackOK,TS val 400646855 ecr 0,nop,wscale 7], length 0
+2026-11-15 16:32:14.137043 IP 10.14.2.10.8443 > 10.14.1.10.33148: Flags [S.], seq 1568018456, ack 2536200547, win 65160, options [mss 1460,sackOK,TS val 1125403550 ecr 400646855,nop,wscale 7], length 0
+2026-11-15 16:32:14.137052 IP 10.14.1.10.33148 > 10.14.2.10.8443: Flags [.], ack 1, win 502, options [nop,nop,TS val 400646855 ecr 1125403550], length 0
+2026-11-15 16:32:14.137171 IP 10.14.1.10.33148 > 10.14.2.10.8443: Flags [P.], seq 1:321, ack 1, win 502, options [nop,nop,TS val 400646855 ecr 1125403550], length 320
+2026-11-15 16:32:14.137177 IP 10.14.2.10.8443 > 10.14.1.10.33148: Flags [.], ack 321, win 507, options [nop,nop,TS val 1125403550 ecr 400646855], length 0
+2026-11-15 16:32:14.138012 IP 10.14.2.10.8443 > 10.14.1.10.33148: Flags [.], seq 1:1449, ack 321, win 507, options [nop,nop,TS val 1125403551 ecr 400646855], length 1448
+2026-11-15 16:32:14.138014 IP 10.14.2.10.8443 > 10.14.1.10.33148: Flags [P.], seq 1449:1478, ack 321, win 507, options [nop,nop,TS val 1125403551 ecr 400646855], length 29
+2026-11-15 16:32:14.138050 IP 10.14.1.10.33148 > 10.14.2.10.8443: Flags [.], ack 1449, win 525, options [nop,nop,TS val 400646856 ecr 1125403551], length 0
+2026-11-15 16:32:14.138051 IP 10.14.1.10.33148 > 10.14.2.10.8443: Flags [.], ack 1478, win 525, options [nop,nop,TS val 400646856 ecr 1125403551], length 0
+2026-11-15 16:32:14.138435 IP 10.14.1.10.33148 > 10.14.2.10.8443: Flags [P.], seq 321:401, ack 1478, win 525, options [nop,nop,TS val 400646857 ecr 1125403551], length 80
+2026-11-15 16:32:14.138537 IP 10.14.1.10.33148 > 10.14.2.10.8443: Flags [P.], seq 401:425, ack 1478, win 525, options [nop,nop,TS val 400646857 ecr 1125403551], length 24
+2026-11-15 16:32:14.138543 IP 10.14.1.10.33148 > 10.14.2.10.8443: Flags [F.], seq 425, ack 1478, win 525, options [nop,nop,TS val 400646857 ecr 1125403551], length 0
+
+Result: 12 passed, 0 failed

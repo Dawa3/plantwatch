@@ -1,0 +1,113 @@
+PlantWatch - Module A: network infrastructure
+Generated: 2026-11-15T16:32:10.494-0600   Host kernel: 6.6.87.2-microsoft-standard-WSL2
+
+==================== Interfaces and addresses per zone ====================
+--- pw-plant
+eth0@if2         UP             10.14.1.10/24 fe80::20be:19ff:fe2a:5201/64 
+--- pw-ops
+eth0@if3         UP             10.14.4.10/24 fe80::7075:2cff:fe1d:1e38/64 
+--- pw-r1
+r1-plant@if2     UP             10.14.1.1/24 fe80::acb8:2cff:fe8e:c51e/64 
+r1-ops@if2       UP             10.14.4.1/24 fe80::2473:62ff:fe81:a76b/64 
+r1-wan@if2       UP             10.14.0.1/30 fe80::bc27:8fff:fe59:9d87/64 
+--- pw-r2
+r2-wan@if4       UP             10.14.0.2/30 fe80::e8a0:90ff:fe2f:38b/64 
+r2-app@if2       UP             10.14.2.1/24 fe80::6893:dfff:fece:e898/64 
+r2-data@if2      UP             10.14.3.1/24 fe80::e475:81ff:fef1:a0e/64 
+--- pw-api
+eth0@if3         UP             10.14.2.10/24 fe80::189f:d8ff:fec2:67d0/64 
+--- pw-db
+eth0@if4         UP             10.14.3.10/24 fe80::3466:baff:fe5c:2383/64 
+
+==================== Route tables ====================
+--- pw-plant
+default via 10.14.1.1 dev eth0 
+10.14.1.0/24 dev eth0 proto kernel scope link src 10.14.1.10 
+--- pw-ops
+default via 10.14.4.1 dev eth0 
+10.14.4.0/24 dev eth0 proto kernel scope link src 10.14.4.10 
+--- pw-r1
+10.14.0.0/30 dev r1-wan proto kernel scope link src 10.14.0.1 
+10.14.1.0/24 dev r1-plant proto kernel scope link src 10.14.1.1 
+10.14.2.0/24 via 10.14.0.2 dev r1-wan 
+10.14.3.0/24 via 10.14.0.2 dev r1-wan 
+10.14.4.0/24 dev r1-ops proto kernel scope link src 10.14.4.1 
+--- pw-r2
+10.14.0.0/30 dev r2-wan proto kernel scope link src 10.14.0.2 
+10.14.1.0/24 via 10.14.0.1 dev r2-wan 
+10.14.2.0/24 dev r2-app proto kernel scope link src 10.14.2.1 
+10.14.3.0/24 dev r2-data proto kernel scope link src 10.14.3.1 
+10.14.4.0/24 via 10.14.0.1 dev r2-wan 
+--- pw-api
+default via 10.14.2.1 dev eth0 
+10.14.2.0/24 dev eth0 proto kernel scope link src 10.14.2.10 
+--- pw-db
+default via 10.14.3.1 dev eth0 
+10.14.3.0/24 dev eth0 proto kernel scope link src 10.14.3.10 
+
+==================== IPv4 forwarding (routers only) ====================
+pw-plant   net.ipv4.ip_forward = 1
+pw-ops     net.ipv4.ip_forward = 1
+pw-r1      net.ipv4.ip_forward = 1
+pw-r2      net.ipv4.ip_forward = 1
+pw-api     net.ipv4.ip_forward = 1
+pw-db      net.ipv4.ip_forward = 1
+
+==================== Path: plant -> API (traceroute, ICMP) ====================
+$ plant traceroute -n -I -q 1 10.14.2.10
+traceroute to 10.14.2.10 (10.14.2.10), 30 hops max, 60 byte packets
+ 1  10.14.1.1  0.033 ms
+ 2  10.14.0.2  0.016 ms
+ 3  10.14.2.10  0.014 ms
+[exit 0]
+
+
+==================== Path: ops -> API ====================
+$ ops traceroute -n -I -q 1 10.14.2.10
+traceroute to 10.14.2.10 (10.14.2.10), 30 hops max, 60 byte packets
+ 1  10.14.4.1  0.017 ms
+ 2  10.14.0.2  0.010 ms
+ 3  10.14.2.10  0.012 ms
+[exit 0]
+
+
+==================== Path: API -> Redis (one router hop inside the data centre) ====================
+$ api traceroute -n -T -p 6379 -q 1 10.14.3.10
+traceroute to 10.14.3.10 (10.14.3.10), 30 hops max, 60 byte packets
+ 1  10.14.2.1  0.019 ms
+ 2  10.14.3.10  0.019 ms
+[exit 0]
+
+
+==================== Reachability: RTT plant -> API ====================
+$ plant ping -c 10 -i 0.2 -q 10.14.2.10
+PING 10.14.2.10 (10.14.2.10) 56(84) bytes of data.
+
+--- 10.14.2.10 ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 1799ms
+rtt min/avg/max/mdev = 0.023/0.118/0.236/0.063 ms
+[exit 0]
+
+
+==================== Connectivity matrix (intended reachability and intended boundaries) ====================
+  PASS  (works)   plant -> edge router        10.14.1.1
+  PASS  (works)   plant -> dc router (wan)    10.14.0.2
+  PASS  (works)   plant -> API                10.14.2.10
+  PASS  (works)   ops   -> API                10.14.2.10
+  PASS  (works)   ops   -> Redis host (ICMP only) 10.14.3.10
+  PASS  (works)   API   -> Redis tcp/6379     10.14.3.10
+  PASS  (blocked) API   -> plant host (data centre may not initiate)
+  PASS  (blocked) plant -> Redis host         10.14.3.10
+  PASS  (blocked) plant -> ops zone           10.14.4.10
+
+==================== Neighbour (ARP) tables on the routers ====================
+--- pw-r1
+10.14.1.10 dev r1-plant lladdr 22:be:19:2a:52:01 DELAY 
+10.14.4.10 dev r1-ops lladdr 72:75:2c:1d:1e:38 DELAY 
+10.14.0.2 dev r1-wan lladdr ea:a0:90:2f:03:8b DELAY 
+--- pw-r2
+10.14.2.10 dev r2-app lladdr 1a:9f:d8:c2:67:d0 REACHABLE 
+10.14.0.1 dev r2-wan lladdr be:27:8f:59:9d:87 REACHABLE 
+10.14.3.10 dev r2-data lladdr 36:66:ba:5c:23:83 REACHABLE 
+
+Result: 9 passed, 0 failed

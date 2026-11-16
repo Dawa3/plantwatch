@@ -1,0 +1,12 @@
+[delay] started 2026-11-15T16:32:42.203-0600
+--- qdisc pw-r1 r1-wan
+qdisc netem 8006: root refcnt 21 limit 1000 delay 50ms  10ms
+--- qdisc pw-r2 r2-wan
+qdisc netem 8007: root refcnt 21 limit 1000 delay 50ms  10ms
+--- qdisc statistics after the run
+qdisc netem 8006: root refcnt 21 limit 1000 delay 50ms  10ms
+ Sent 65330987 bytes 45569 pkt (dropped 2611, overlimits 0 requeues 0) 
+ backlog 66b 1p requeues 0
+qdisc netem 8007: root refcnt 21 limit 1000 delay 50ms  10ms
+ Sent 4811267 bytes 28796 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0

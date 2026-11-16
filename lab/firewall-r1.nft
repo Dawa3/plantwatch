@@ -1,0 +1,21 @@
+# Edge router policy (namespace pw-r1).
+# Loaded with:  ip netns exec pw-r1 nft -f lab/firewall-r1.nft
+flush ruleset
+
+table inet pw {
+    counter deny_spoof        { }
+    counter deny_plant_to_ops { }
+
+    chain forward {
+        type filter hook forward priority filter; policy accept;
+
+        # Anti-spoofing: a segment may only send packets with its own source prefix.
+        iifname "r1-plant" ip saddr != 10.14.1.0/24 counter name deny_spoof drop
+        iifname "r1-ops"   ip saddr != 10.14.4.0/24 counter name deny_spoof drop
+
+        ct state established,related accept
+
+        # Machines on the plant floor must not reach the operations zone.
+        iifname "r1-plant" oifname "r1-ops" counter name deny_plant_to_ops reject with icmpx type admin-prohibited
+    }
+}

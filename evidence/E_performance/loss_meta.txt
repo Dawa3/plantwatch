@@ -1,0 +1,12 @@
+[loss] started 2026-11-15T16:33:40.565-0600
+--- qdisc pw-r1 r1-wan
+qdisc netem 8009: root refcnt 21 limit 1000 loss 5%
+--- qdisc pw-r2 r2-wan
+qdisc netem 800a: root refcnt 21 limit 1000 loss 5%
+--- qdisc statistics after the run
+qdisc netem 8009: root refcnt 21 limit 1000 loss 5%
+ Sent 14728610 bytes 11134 pkt (dropped 603, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc netem 800a: root refcnt 21 limit 1000 loss 5%
+ Sent 2542426 bytes 5015 pkt (dropped 288, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0

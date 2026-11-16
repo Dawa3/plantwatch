@@ -1,0 +1,20 @@
+# Rendered to run/redis.conf by lab/services.sh (the rendered file holds the password).
+bind @BIND@
+port 6379
+protected-mode yes
+requirepass @PASSWORD@
+
+daemonize yes
+pidfile @RUN@/redis.pid
+logfile @LOGS@/redis.log
+dir @RUN@/redis
+
+# Durability: append-only file, fsync once per second.
+appendonly yes
+appendfsync everysec
+save ""
+
+timeout 0
+tcp-keepalive 60
+maxmemory 256mb
+maxmemory-policy noeviction

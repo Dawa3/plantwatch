@@ -1,0 +1,52 @@
+# Data-centre router policy (namespace pw-r2).
+# Loaded with:  ip netns exec pw-r2 nft -f lab/firewall-r2.nft
+# NOTE: "flush ruleset" only affects the namespace it is run in. Never load on the host.
+flush ruleset
+
+define PLANT = 10.14.1.0/24
+define OPS   = 10.14.4.0/24
+define APP   = 10.14.2.0/24
+define DATA  = 10.14.3.0/24
+define API   = 10.14.2.10
+define DB    = 10.14.3.10
+
+table inet pw {
+    counter allow_https   { }
+    counter allow_iperf   { }
+    counter allow_api_db  { }
+    counter allow_icmp    { }
+    counter deny_to_data  { }
+    counter deny_other    { }
+
+    chain forward {
+        type filter hook forward priority filter; policy drop;
+
+        ct state established,related accept
+        ct state invalid drop
+
+        # 1. Clients and the ops probe may reach the API over HTTPS only.
+        iifname "r2-wan" oifname "r2-app" ip saddr { $PLANT, $OPS } ip daddr $API tcp dport 8443 counter name allow_https accept
+
+        # 2. Throughput measurement (iperf3) from the plant segment to the API host.
+        iifname "r2-wan" oifname "r2-app" ip saddr $PLANT ip daddr $API tcp dport 5201 counter name allow_iperf accept
+
+        # 3. Only the API host may open a Redis connection into the data segment.
+        iifname "r2-app" oifname "r2-data" ip saddr $API ip daddr $DB tcp dport 6379 counter name allow_api_db accept
+
+        # 4. Reachability tests (ping / traceroute -I).
+        ip saddr { $PLANT, $OPS } ip daddr $APP icmp type echo-request counter name allow_icmp accept
+        ip saddr $OPS ip daddr $DATA icmp type echo-request counter name allow_icmp accept
+
+        # 5. Everything else is refused. Traffic aimed at the data segment is counted separately.
+        ip daddr $DATA counter name deny_to_data reject with icmpx type admin-prohibited
+        counter name deny_other reject with icmpx type admin-prohibited
+    }
+
+    chain input {
+        type filter hook input priority filter; policy drop;
+        iifname "lo" accept
+        ct state established,related accept
+        icmp type echo-request accept
+        counter drop
+    }
+}

@@ -1,0 +1,58 @@
+{
+  "label": "loss",
+  "requests": 280,
+  "elapsed_s": 7.21,
+  "errors": 0,
+  "ops": {
+    "write": {
+      "n": 100,
+      "errors": 0,
+      "p50_ms": 1.49,
+      "p95_ms": 7.56,
+      "p99_ms": 15.85,
+      "mean_ms": 4.73,
+      "app_p50_ms": 0.75,
+      "db_p50_ms": 0.43,
+      "net_p50_ms": 0.74,
+      "kbytes_p50": 0.1
+    },
+    "read_latest": {
+      "n": 100,
+      "errors": 0,
+      "p50_ms": 0.9,
+      "p95_ms": 210.37,
+      "p99_ms": 212.72,
+      "mean_ms": 14.0,
+      "app_p50_ms": 0.3,
+      "db_p50_ms": 0.17,
+      "net_p50_ms": 0.6,
+      "kbytes_p50": 0.2
+    },
+    "read_history": {
+      "n": 50,
+      "errors": 0,
+      "p50_ms": 10.22,
+      "p95_ms": 228.14,
+      "p99_ms": 333.68,
+      "mean_ms": 48.68,
+      "app_p50_ms": 8.69,
+      "db_p50_ms": 6.84,
+      "net_p50_ms": 1.27,
+      "kbytes_p50": 36.5
+    },
+    "newconn_read": {
+      "n": 30,
+      "errors": 0,
+      "p50_ms": 3.24,
+      "p95_ms": 764.4,
+      "p99_ms": 1180.48,
+      "mean_ms": 114.88,
+      "app_p50_ms": 0.45,
+      "db_p50_ms": 0.29,
+      "net_p50_ms": 2.75,
+      "kbytes_p50": 0.2
+    }
+  },
+  "success_rate_pct": 100.0,
+  "requests_per_s": 38.9
+}

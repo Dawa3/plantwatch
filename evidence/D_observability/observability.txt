@@ -1,0 +1,167 @@
+PlantWatch - Module D: observability - one transaction, three vantage points
+Generated: 2026-11-15T16:32:20.998-0600   Host kernel: 6.6.87.2-microsoft-standard-WSL2
+
+==================== 1. Client view (plant zone): request ids and timing split ====================
+{
+  "client_connect_start": "16:32:19.919899",
+  "client_connect_start_epoch": 1794781939.919899,
+  "write": {
+    "request_id": "7b891852db70",
+    "status": 201,
+    "done": "16:32:19.936558",
+    "total_ms": 4.478,
+    "app_ms": 1.032,
+    "db_ms": 0.59,
+    "net_ms": 3.446
+  },
+  "read": {
+    "request_id": "2747c5bf0aa9",
+    "status": 200,
+    "done": "16:32:19.937809",
+    "total_ms": 1.241,
+    "app_ms": 0.366,
+    "db_ms": 0.191,
+    "net_ms": 0.875
+  },
+  "stored_state": {
+    "machine_id": "TRACE01",
+    "last_ts": "1794781939.9198985",
+    "last_source": "trace",
+    "status": "ok",
+    "type": "H",
+    "air_temp_k": "298.4",
+    "process_temp_k": "308.9",
+    "rpm": "1551.0",
+    "torque_nm": "42.8",
+    "tool_wear_min": "77.0",
+    "readings": "1"
+  }
+}
+
+==================== 2. API log lines for the same request ids (7b891852db70 write, 2747c5bf0aa9 read) ====================
+{"ts":1794781939.936,"iso":"2026-11-15T16:32:19","level":"INFO","rid":"7b891852db70","client":"10.14.1.10","method":"POST","path":"/telemetry","status":201,"app_ms":1.032,"db_ms":0.59}
+{"ts":1794781939.937,"iso":"2026-11-15T16:32:19","level":"INFO","rid":"2747c5bf0aa9","client":"10.14.1.10","method":"GET","path":"/machines/TRACE01","status":200,"app_ms":0.366,"db_ms":0.191}
+
+==================== 3. Capture on pw-r2 r2-wan (client <-> API, tcp/8443): handshake then encrypted records ====================
+2026-11-15 16:32:19.932871 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [S], seq 2421595720, win 64240, options [mss 1460,sackOK,TS val 400652651 ecr 0,nop,wscale 7], length 0
+2026-11-15 16:32:19.932891 IP 10.14.2.10.8443 > 10.14.1.10.45434: Flags [S.], seq 935121019, ack 2421595721, win 65160, options [mss 1460,sackOK,TS val 1125409346 ecr 400652651,nop,wscale 7], length 0
+2026-11-15 16:32:19.932901 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [.], ack 1, win 502, options [nop,nop,TS val 400652651 ecr 1125409346], length 0
+2026-11-15 16:32:19.933108 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [P.], seq 1:518, ack 1, win 502, options [nop,nop,TS val 400652651 ecr 1125409346], length 517
+2026-11-15 16:32:19.933113 IP 10.14.2.10.8443 > 10.14.1.10.45434: Flags [.], ack 518, win 506, options [nop,nop,TS val 1125409346 ecr 400652651], length 0
+2026-11-15 16:32:19.933910 IP 10.14.2.10.8443 > 10.14.1.10.45434: Flags [.], seq 1:1449, ack 518, win 506, options [nop,nop,TS val 1125409347 ecr 400652651], length 1448
+2026-11-15 16:32:19.933912 IP 10.14.2.10.8443 > 10.14.1.10.45434: Flags [P.], seq 1449:1478, ack 518, win 506, options [nop,nop,TS val 1125409347 ecr 400652651], length 29
+2026-11-15 16:32:19.933953 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [.], ack 1449, win 525, options [nop,nop,TS val 400652652 ecr 1125409347], length 0
+2026-11-15 16:32:19.933955 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [.], ack 1478, win 525, options [nop,nop,TS val 400652652 ecr 1125409347], length 0
+2026-11-15 16:32:19.934342 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [P.], seq 518:598, ack 1478, win 525, options [nop,nop,TS val 400652652 ecr 1125409347], length 80
+2026-11-15 16:32:19.934476 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [P.], seq 598:834, ack 1478, win 525, options [nop,nop,TS val 400652653 ecr 1125409347], length 236
+2026-11-15 16:32:19.934504 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [P.], seq 834:1021, ack 1478, win 525, options [nop,nop,TS val 400652653 ecr 1125409347], length 187
+2026-11-15 16:32:19.934505 IP 10.14.2.10.8443 > 10.14.1.10.45434: Flags [.], ack 834, win 504, options [nop,nop,TS val 1125409348 ecr 400652652], length 0
+2026-11-15 16:32:19.934715 IP 10.14.2.10.8443 > 10.14.1.10.45434: Flags [P.], seq 1478:1988, ack 1021, win 503, options [nop,nop,TS val 1125409348 ecr 400652653], length 510
+2026-11-15 16:32:19.936038 IP 10.14.2.10.8443 > 10.14.1.10.45434: Flags [P.], seq 1988:2201, ack 1021, win 503, options [nop,nop,TS val 1125409349 ecr 400652653], length 213
+2026-11-15 16:32:19.936128 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [.], ack 2201, win 570, options [nop,nop,TS val 400652654 ecr 1125409348], length 0
+2026-11-15 16:32:19.936132 IP 10.14.2.10.8443 > 10.14.1.10.45434: Flags [P.], seq 2201:2303, ack 1021, win 503, options [nop,nop,TS val 1125409349 ecr 400652653], length 102
+2026-11-15 16:32:19.936746 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [P.], seq 1021:1210, ack 2303, win 570, options [nop,nop,TS val 400652655 ecr 1125409349], length 189
+2026-11-15 16:32:19.937523 IP 10.14.2.10.8443 > 10.14.1.10.45434: Flags [P.], seq 2303:2512, ack 1210, win 502, options [nop,nop,TS val 1125409351 ecr 400652655], length 209
+2026-11-15 16:32:19.937600 IP 10.14.2.10.8443 > 10.14.1.10.45434: Flags [P.], seq 2512:2754, ack 1210, win 502, options [nop,nop,TS val 1125409351 ecr 400652655], length 242
+2026-11-15 16:32:19.937752 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [.], ack 2754, win 616, options [nop,nop,TS val 400652656 ecr 1125409351], length 0
+2026-11-15 16:32:19.937831 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [F.], seq 1210, ack 2754, win 616, options [nop,nop,TS val 400652656 ecr 1125409351], length 0
+2026-11-15 16:32:19.937967 IP 10.14.2.10.8443 > 10.14.1.10.45434: Flags [F.], seq 2754, ack 1211, win 502, options [nop,nop,TS val 1125409351 ecr 400652656], length 0
+2026-11-15 16:32:19.937980 IP 10.14.1.10.45434 > 10.14.2.10.8443: Flags [.], ack 2755, win 616, options [nop,nop,TS val 400652656 ecr 1125409351], length 0
+...
+packets on this flow: 24
+
+==================== 4. Capture on pw-r2 r2-data (API <-> Redis, tcp/6379): commands of the same transaction ====================
+2026-11-15 16:32:19.935234 IP 10.14.2.10.39558 > 10.14.3.10.6379: Flags [P.], seq 2994916228:2994916286, ack 2064213790, win 492, options [nop,nop,TS val 2034606638 ecr 1651346506], length 58: RESP "HGET" "machine:TRACE01" "tool_wear_limit"
+2026-11-15 16:32:19.935297 IP 10.14.3.10.6379 > 10.14.2.10.39558: Flags [P.], seq 1:4, ack 58, win 537, options [nop,nop,TS val 1651351204 ecr 2034606638], length 3: RESP "_"
+2026-11-15 16:32:19.935322 IP 10.14.2.10.39558 > 10.14.3.10.6379: Flags [.], ack 4, win 492, options [nop,nop,TS val 2034606638 ecr 1651351204], length 0
+2026-11-15 16:32:19.935484 IP 10.14.2.10.39558 > 10.14.3.10.6379: Flags [P.], seq 58:835, ack 4, win 492, options [nop,nop,TS val 2034606639 ecr 1651351204], length 777: RESP "MULTI" "XADD" "telemetry:TRACE01" "MAXLEN" "~" "2000" "*" "ts" "1794781939.9198985" "type" "H" "air_temp_k" "298.4" "process_temp_k" "308.9" "rpm" "1551.0" "torque_nm" "42.8" "tool_wear_min" "77.0" "source" "trace" "SADD" "machines" "TRACE01" "HSET" "machine:TRACE01" "machine_id" "TRACE01" "last_ts" "1794781939.9198985" "last_source" "trace" "status" "ok" "type" "H" "air_temp_k" "298.4" "process_temp_k" "308.9" "rpm" "1551.0" "torque_nm" "42.8" "tool_wear_min" "77.0" "HINCRBY" "machine:TRACE01" "readings" "1" "HINCRBY" "stats" "readings_total" "1" "EXEC"
+2026-11-15 16:32:19.935576 IP 10.14.3.10.6379 > 10.14.2.10.39558: Flags [P.], seq 4:101, ack 835, win 553, options [nop,nop,TS val 1651351205 ecr 2034606639], length 97: RESP "OK" "QUEUED" "QUEUED" "QUEUED" "QUEUED" "QUEUED" "1794781939935-0" "1" "10" "1" "10006"
+2026-11-15 16:32:19.937173 IP 10.14.2.10.39558 > 10.14.3.10.6379: Flags [P.], seq 835:874, ack 101, win 492, options [nop,nop,TS val 2034606640 ecr 1651351205], length 39: RESP "HGETALL" "machine:TRACE01"
+2026-11-15 16:32:19.937235 IP 10.14.3.10.6379 > 10.14.2.10.39558: Flags [P.], seq 101:397, ack 874, win 553, options [nop,nop,TS val 1651351206 ecr 2034606640], length 296: RESP "%11" "machine_id" "TRACE01" "last_ts" "1794781939.9198985" "last_source" "trace" "status" "ok" "type" "H" "air_temp_k" "298.4" "process_temp_k" "308.9" "rpm" "1551.0" "torque_nm" "42.8" "tool_wear_min" "77.0" "readings" "1"
+2026-11-15 16:32:19.981253 IP 10.14.2.10.39558 > 10.14.3.10.6379: Flags [.], ack 397, win 490, options [nop,nop,TS val 2034606684 ecr 1651351206], length 0
+
+Redis commands visible in the payload (RESP protocol, reassembled as text):
+HGET machine:TRACE01 tool_wear_limit MULTI XADD telemetry:TRACE01 SADD HSET machine:TRACE01 HINCRBY 
+machine:TRACE01 HINCRBY EXEC HGETALL machine:TRACE01
+
+==================== 5. Is the payload readable on the wire? ====================
+machine id "TRACE01" found in client-side capture (TLS)  : 0 occurrences
+machine id "TRACE01" found in data-segment capture (RESP): 8 occurrences
+=> TLS hides the application data between client and API. Inside the data
+   centre the Redis protocol is plaintext; that segment is protected by the
+   firewall rules (Module C), not by encryption.
+
+==================== 6. Flows seen at each capture point (src > dst, packet count) ====================
+--- 1_plant_client.pcap
+     13 10.14.1.10.45434 > 10.14.2.10.8443
+     11 10.14.2.10.8443 > 10.14.1.10.45434
+--- 2_r2_wan_tls.pcap
+     13 10.14.1.10.45434 > 10.14.2.10.8443
+     11 10.14.2.10.8443 > 10.14.1.10.45434
+--- 3_r2_data_redis.pcap
+      5 10.14.2.10.39558 > 10.14.3.10.6379
+      3 10.14.3.10.6379 > 10.14.2.10.39558
+
+==================== 7. Listening sockets per zone ====================
+--- pw-api
+LISTEN 10.14.2.10:5201 users:(("iperf3",pid=21084,fd=3))
+LISTEN 10.14.2.10:8443 users:(("python",pid=21082,fd=7))
+--- pw-db
+LISTEN 10.14.3.10:6379 users:(("redis-server",pid=21072,fd=6))
+--- pw-plant
+--- pw-ops
+
+==================== 8. Log samples ====================
+--- API request log (last 8 lines, JSON, one line per request)
+{"ts":1794781932.528,"iso":"2026-11-15T16:32:12","level":"WARN","rid":"98aa68fcda20","client":"10.14.1.10","method":"POST","path":"/telemetry","status":422,"app_ms":0.423,"db_ms":0.0}
+{"ts":1794781932.537,"iso":"2026-11-15T16:32:12","level":"WARN","rid":"83be77c07718","client":"10.14.1.10","method":"POST","path":"/telemetry","status":422,"app_ms":0.422,"db_ms":0.0}
+{"ts":1794781932.546,"iso":"2026-11-15T16:32:12","level":"WARN","rid":"4254e100a581","client":"10.14.1.10","method":"DELETE","path":"/machines/DEMO01","status":405,"app_ms":0.193,"db_ms":0.0}
+{"ts":1794781934.159,"iso":"2026-11-15T16:32:14","level":"INFO","rid":"86ba689182fe","client":"10.14.1.10","method":"GET","path":"/health","status":200,"app_ms":0.362,"db_ms":0.191}
+{"ts":1794781935.229,"iso":"2026-11-15T16:32:15","level":"INFO","rid":"1c303205e6e2","client":"10.14.1.10","method":"GET","path":"/health","status":200,"app_ms":0.484,"db_ms":0.29}
+{"ts":1794781935.237,"iso":"2026-11-15T16:32:15","level":"INFO","rid":"034d88473a99","client":"10.14.4.10","method":"GET","path":"/health","status":200,"app_ms":0.35,"db_ms":0.179}
+{"ts":1794781939.936,"iso":"2026-11-15T16:32:19","level":"INFO","rid":"7b891852db70","client":"10.14.1.10","method":"POST","path":"/telemetry","status":201,"app_ms":1.032,"db_ms":0.59}
+{"ts":1794781939.937,"iso":"2026-11-15T16:32:19","level":"INFO","rid":"2747c5bf0aa9","client":"10.14.1.10","method":"GET","path":"/machines/TRACE01","status":200,"app_ms":0.366,"db_ms":0.191}
+
+--- API warnings and errors (last 8)
+{"ts":1794781930.472,"iso":"2026-11-15T16:32:10","level":"WARN","rid":"297358fa5bdd","client":"10.14.1.10","method":"POST","path":"/telemetry","status":422,"app_ms":0.459,"db_ms":0.0}
+{"ts":1794781930.483,"iso":"2026-11-15T16:32:10","level":"WARN","rid":"282de3b4a3ba","client":"10.14.1.10","method":"GET","path":"/machines/NOPE","status":404,"app_ms":0.502,"db_ms":0.28}
+{"ts":1794781932.409,"iso":"2026-11-15T16:32:12","level":"WARN","rid":"4b3760c4e5c6","client":"10.14.1.10","method":"PUT","path":"/machines/DEMO01/config","status":404,"app_ms":0.946,"db_ms":0.359}
+{"ts":1794781932.43,"iso":"2026-11-15T16:32:12","level":"WARN","event":"alert","machine_id":"DEMO01","rule":"TWF","alert_id":"1794781932429-0"}
+{"ts":1794781932.518,"iso":"2026-11-15T16:32:12","level":"WARN","rid":"552f84ef0b52","client":"10.14.1.10","method":"GET","path":"/machines/DOES-NOT-EXIST","status":404,"app_ms":0.802,"db_ms":0.3}
+{"ts":1794781932.528,"iso":"2026-11-15T16:32:12","level":"WARN","rid":"98aa68fcda20","client":"10.14.1.10","method":"POST","path":"/telemetry","status":422,"app_ms":0.423,"db_ms":0.0}
+{"ts":1794781932.537,"iso":"2026-11-15T16:32:12","level":"WARN","rid":"83be77c07718","client":"10.14.1.10","method":"POST","path":"/telemetry","status":422,"app_ms":0.422,"db_ms":0.0}
+{"ts":1794781932.546,"iso":"2026-11-15T16:32:12","level":"WARN","rid":"4254e100a581","client":"10.14.1.10","method":"DELETE","path":"/machines/DEMO01","status":405,"app_ms":0.193,"db_ms":0.0}
+
+--- Redis server log (last 8 lines)
+21072:M 15 Nov 2026 16:31:26.331 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+21072:M 15 Nov 2026 16:31:26.331 * monotonic clock: POSIX clock_gettime
+21072:M 15 Nov 2026 16:31:26.331 * Running mode=standalone, port=6379.
+21072:M 15 Nov 2026 16:31:26.331 # Server initialized
+21072:M 15 Nov 2026 16:31:26.331 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+21072:M 15 Nov 2026 16:31:26.336 * Creating AOF base file appendonly.aof.1.base.rdb on server start
+21072:M 15 Nov 2026 16:31:26.341 * Creating AOF incr file appendonly.aof.1.incr.aof on server start
+21072:M 15 Nov 2026 16:31:26.341 * Ready to accept connections
+
+--- Lab event log (last 10 events)
+
+==================== 9. Firewall counters on pw-r2 (traffic accounting) ====================
+table inet pw {
+	counter allow_https {
+		packets 42 bytes 2520
+	}
+	counter allow_iperf {
+		packets 0 bytes 0
+	}
+	counter allow_api_db {
+		packets 40 bytes 2400
+	}
+	counter allow_icmp {
+		packets 10 bytes 792
+	}
+	counter deny_to_data {
+		packets 13 bytes 924
+	}
+	counter deny_other {
+		packets 7 bytes 444
+	}
+}

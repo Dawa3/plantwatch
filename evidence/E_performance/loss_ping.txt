@@ -1,0 +1,5 @@
+PING 10.14.2.10 (10.14.2.10) 56(84) bytes of data.
+
+--- 10.14.2.10 ping statistics ---
+50 packets transmitted, 43 received, 14% packet loss, time 9898ms
+rtt min/avg/max/mdev = 0.050/0.129/0.377/0.072 ms

@@ -1,0 +1,12 @@
+[rate] started 2026-11-15T16:34:07.340-0600
+--- qdisc pw-r1 r1-wan
+qdisc tbf 800b: root refcnt 21 rate 2Mbit burst 4Kb lat 50ms 
+--- qdisc pw-r2 r2-wan
+qdisc tbf 800c: root refcnt 21 rate 2Mbit burst 4Kb lat 50ms 
+--- qdisc statistics after the run
+qdisc tbf 800b: root refcnt 21 rate 2Mbit burst 4Kb lat 50ms 
+ Sent 1518710 bytes 2748 pkt (dropped 27, overlimits 2822 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc tbf 800c: root refcnt 21 rate 2Mbit burst 4Kb lat 50ms 
+ Sent 2400969 bytes 3014 pkt (dropped 34, overlimits 4978 requeues 0) 
+ backlog 0b 0p requeues 0

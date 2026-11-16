@@ -1,0 +1,12 @@
+[baseline] started 2026-11-15T16:32:21.097-0600
+--- qdisc pw-r1 r1-wan
+qdisc noqueue 0: root refcnt 2 
+--- qdisc pw-r2 r2-wan
+qdisc noqueue 0: root refcnt 2 
+--- qdisc statistics after the run
+qdisc noqueue 0: root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0

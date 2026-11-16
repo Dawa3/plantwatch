@@ -1,0 +1,211 @@
+PlantWatch - Module B: distributed service (client zone -> HTTPS API -> Redis)
+Generated: 2026-11-15T16:32:12.410-0600   Host kernel: 6.6.87.2-microsoft-standard-WSL2
+
+==================== CREATE - POST /telemetry (normal reading) ====================
+$ curl --cacert run/certs/ca.pem -X POST -H 'Content-Type: application/json' https://api.plantwatch.lab:8443/telemetry -d '{"machine_id":"DEMO01","type":"M","air_temp_k":298.9,"process_temp_k":309.4,"rpm":1503,"torque_nm":41.2,"tool_wear_min":35,"source":"demo"}'
+{"stored":true,"machine_id":"DEMO01","stream_id":"1794781932419-0","alerts":[]}
+[HTTP 201  total 0.004709s]
+
+
+==================== CREATE - POST /telemetry (worn tool: raises a TWF alert) ====================
+$ curl --cacert run/certs/ca.pem -X POST -H 'Content-Type: application/json' https://api.plantwatch.lab:8443/telemetry -d '{"machine_id":"DEMO01","type":"M","air_temp_k":299.1,"process_temp_k":309.6,"rpm":1490,"torque_nm":42.0,"tool_wear_min":215,"source":"demo"}'
+{"stored":true,"machine_id":"DEMO01","stream_id":"1794781932429-0","alerts":[{"rule":"TWF","detail":"tool wear 215 min >= limit 200","id":"1794781932429-0"}]}
+[HTTP 201  total 0.004251s]
+
+
+==================== READ - GET /machines/DEMO01 (latest state) ====================
+$ curl --cacert run/certs/ca.pem -X GET https://api.plantwatch.lab:8443/machines/DEMO01
+{"machine_id":"DEMO01","last_ts":"1794781932.429542","last_source":"demo","status":"alert","type":"M","air_temp_k":"299.1","process_temp_k":"309.6","rpm":"1490.0","torque_nm":"42.0","tool_wear_min":"215.0","readings":"2"}
+[HTTP 200  total 0.003605s]
+
+
+==================== READ - GET /machines/DEMO01/readings?count=2 (history, newest first) ====================
+$ curl --cacert run/certs/ca.pem -X GET https://api.plantwatch.lab:8443/machines/DEMO01/readings?count=2
+{"machine_id":"DEMO01","count":2,"readings":[{"id":"1794781932429-0","ts":"1794781932.429542","type":"M","air_temp_k":"299.1","process_temp_k":"309.6","rpm":"1490.0","torque_nm":"42.0","tool_wear_min":"215.0","source":"demo"},{"id":"1794781932419-0","ts":"1794781932.419536","type":"M","air_temp_k":"298.9","process_temp_k":"309.4","rpm":"1503.0","torque_nm":"41.2","tool_wear_min":"35.0","source":"demo"}]}
+[HTTP 200  total 0.004214s]
+
+
+==================== UPDATE - PUT /machines/DEMO01/config (raise the tool-wear threshold) ====================
+$ curl --cacert run/certs/ca.pem -X PUT -H 'Content-Type: application/json' https://api.plantwatch.lab:8443/machines/DEMO01/config -d '{"tool_wear_limit":240}'
+{"machine_id":"DEMO01","tool_wear_limit":240.0}
+[HTTP 200  total 0.003924s]
+
+
+==================== Effect of the update: the same worn-tool reading no longer raises an alert ====================
+$ curl --cacert run/certs/ca.pem -X POST -H 'Content-Type: application/json' https://api.plantwatch.lab:8443/telemetry -d '{"machine_id":"DEMO01","type":"M","air_temp_k":299.1,"process_temp_k":309.6,"rpm":1490,"torque_nm":42.0,"tool_wear_min":215,"source":"demo"}'
+{"stored":true,"machine_id":"DEMO01","stream_id":"1794781932464-0","alerts":[]}
+[HTTP 201  total 0.003765s]
+
+
+==================== READ - GET /alerts?count=3 and UPDATE - POST /alerts/{id}/ack ====================
+$ curl --cacert run/certs/ca.pem -X GET https://api.plantwatch.lab:8443/alerts?count=3
+{"count":3,"alerts":[{"id":"1794781932429-0","machine_id":"DEMO01","rule":"TWF","detail":"tool wear 215 min >= limit 200","sensor_ts":"1794781932.429542","received_ts":"1794781932.429542","source":"rule","acked":false},{"id":"1794780386000-1","machine_id":"M15","rule":"OSF","detail":"labelled failure in dataset row 9975","sensor_ts":"1794780386","received_ts":"1794780386","source":"dataset-label","acked":false},{"id":"1794780386000-0","machine_id":"M15","rule":"PWF","detail":"labelled failure in dataset row 9975","sensor_ts":"1794780386","received_ts":"1794780386","source":"dataset-label","acked":false}]}
+[HTTP 200  total 0.003787s]
+
+$ curl --cacert run/certs/ca.pem -X POST https://api.plantwatch.lab:8443/alerts/1794781932429-0/ack
+{"id":"1794781932429-0","acked":true}
+[HTTP 200  total 0.004100s]
+
+
+==================== READ - GET /machines and GET /stats ====================
+$ curl --cacert run/certs/ca.pem -X GET https://api.plantwatch.lab:8443/machines
+{"count":22,"machines":["CHK01","DEMO01","M01","M02","M03","M04","M05","M06","M07","M08","M09","M10","M11","M12","M13","M14","M15","M16","M17","M18","M19","M20"]}
+[HTTP 200  total 0.003579s]
+
+$ curl --cacert run/certs/ca.pem -X GET https://api.plantwatch.lab:8443/stats
+{"machines":22,"alerts_in_stream":365,"imported_rows":"10000","import_source":"ai4i2020","imported_alerts":"364","imported_at":"1794781886","readings_total":"10005","alerts_total":"365"}
+[HTTP 200  total 0.003617s]
+
+
+==================== ERROR - unknown machine (404) ====================
+$ curl --cacert run/certs/ca.pem -X GET https://api.plantwatch.lab:8443/machines/DOES-NOT-EXIST
+{"detail":"unknown machine 'DOES-NOT-EXIST'"}
+[HTTP 404  total 0.003972s]
+
+
+==================== ERROR - invalid payload: missing fields (422) ====================
+$ curl --cacert run/certs/ca.pem -X POST -H 'Content-Type: application/json' https://api.plantwatch.lab:8443/telemetry -d '{"machine_id":"DEMO01","rpm":1500}'
+{"detail":[{"type":"missing","loc":["body","air_temp_k"],"msg":"Field required","input":{"machine_id":"DEMO01","rpm":1500}},{"type":"missing","loc":["body","process_temp_k"],"msg":"Field required","input":{"machine_id":"DEMO01","rpm":1500}},{"type":"missing","loc":["body","torque_nm"],"msg":"Field required","input":{"machine_id":"DEMO01","rpm":1500}},{"type":"missing","loc":["body","tool_wear_min"],"msg":"Field required","input":{"machine_id":"DEMO01","rpm":1500}}]}
+[HTTP 422  total 0.005070s]
+
+
+==================== ERROR - out-of-range value (422) ====================
+$ curl --cacert run/certs/ca.pem -X POST -H 'Content-Type: application/json' https://api.plantwatch.lab:8443/telemetry -d '{"machine_id":"DEMO01","type":"M","air_temp_k":299,"process_temp_k":309,"rpm":-5,"torque_nm":40,"tool_wear_min":10}'
+{"detail":[{"type":"greater_than_equal","loc":["body","rpm"],"msg":"Input should be greater than or equal to 0","input":-5,"ctx":{"ge":0.0}}]}
+[HTTP 422  total 0.003748s]
+
+
+==================== ERROR - wrong method (405) ====================
+$ curl --cacert run/certs/ca.pem -X DELETE https://api.plantwatch.lab:8443/machines/DEMO01
+{"detail":"Method Not Allowed"}
+[HTTP 405  total 0.003390s]
+
+
+==================== Redis data model (queried from the service zone, the only zone allowed to reach Redis) ====================
+$ redis-cli INFO keyspace
+# Keyspace
+db0:keys=48,expires=0,avg_ttl=0
+
+$ redis-cli DBSIZE
+48
+
+$ redis-cli SCARD machines
+22
+
+$ redis-cli TYPE machine:M01
+hash
+
+$ redis-cli HGETALL machine:M01
+machine_id
+M01
+type
+L
+last_ts
+1794780746
+last_source
+ai4i2020
+air_temp_k
+298.6
+process_temp_k
+308.4
+rpm
+1559.0
+torque_nm
+36.6
+tool_wear_min
+188.0
+status
+ok
+readings
+500
+tool_wear_limit
+200
+
+$ redis-cli TYPE telemetry:M01
+stream
+
+$ redis-cli XLEN telemetry:M01
+500
+
+$ redis-cli XREVRANGE telemetry:M01 + - COUNT 2
+1794780746000-9981
+ts
+1794780746
+type
+L
+air_temp_k
+298.6
+process_temp_k
+308.4
+rpm
+1559.0
+torque_nm
+36.6
+tool_wear_min
+188.0
+source
+ai4i2020
+udi
+9981
+failure
+0
+1794779546000-9961
+ts
+1794779546
+type
+L
+air_temp_k
+298.2
+process_temp_k
+307.8
+rpm
+1575.0
+torque_nm
+35.0
+tool_wear_min
+137.0
+source
+ai4i2020
+udi
+9961
+failure
+0
+
+$ redis-cli TYPE alerts
+stream
+
+$ redis-cli XLEN alerts
+365
+
+$ redis-cli XREVRANGE alerts + - COUNT 1
+1794781932429-0
+machine_id
+DEMO01
+rule
+TWF
+detail
+tool wear 215 min >= limit 200
+sensor_ts
+1794781932.429542
+received_ts
+1794781932.429542
+source
+rule
+
+$ redis-cli HGETALL stats
+imported_rows
+10000
+import_source
+ai4i2020
+imported_alerts
+364
+imported_at
+1794781886
+readings_total
+10005
+alerts_total
+365
+
+$ redis-cli CONFIG GET appendonly
+appendonly
+yes

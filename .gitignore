@@ -1,0 +1,9 @@
+# secrets and runtime state - never commit
+.env
+run/
+.venv/
+__pycache__/
+*.pyc
+# dataset is downloaded by data/get_dataset.sh (see README for attribution)
+data/*.csv
+data/*.zip

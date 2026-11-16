@@ -1,0 +1,35 @@
+{
+  "client_connect_start": "16:32:19.919899",
+  "client_connect_start_epoch": 1794781939.919899,
+  "write": {
+    "request_id": "7b891852db70",
+    "status": 201,
+    "done": "16:32:19.936558",
+    "total_ms": 4.478,
+    "app_ms": 1.032,
+    "db_ms": 0.59,
+    "net_ms": 3.446
+  },
+  "read": {
+    "request_id": "2747c5bf0aa9",
+    "status": 200,
+    "done": "16:32:19.937809",
+    "total_ms": 1.241,
+    "app_ms": 0.366,
+    "db_ms": 0.191,
+    "net_ms": 0.875
+  },
+  "stored_state": {
+    "machine_id": "TRACE01",
+    "last_ts": "1794781939.9198985",
+    "last_source": "trace",
+    "status": "ok",
+    "type": "H",
+    "air_temp_k": "298.4",
+    "process_temp_k": "308.9",
+    "rpm": "1551.0",
+    "torque_nm": "42.8",
+    "tool_wear_min": "77.0",
+    "readings": "1"
+  }
+}

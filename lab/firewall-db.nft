@@ -1,0 +1,17 @@
+# Host firewall on the Redis host (namespace pw-db). Defence in depth behind pw-r2.
+# Loaded with:  ip netns exec pw-db nft -f lab/firewall-db.nft
+flush ruleset
+
+table inet pw {
+    counter allow_redis_from_api { }
+    counter deny_db_input        { }
+
+    chain input {
+        type filter hook input priority filter; policy drop;
+        iifname "lo" accept
+        ct state established,related accept
+        ip saddr 10.14.2.10 tcp dport 6379 counter name allow_redis_from_api accept
+        icmp type echo-request accept
+        counter name deny_db_input drop
+    }
+}

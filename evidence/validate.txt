@@ -1,0 +1,36 @@
+PlantWatch - configuration validation
+Generated: 2026-11-15T16:32:10.294-0600   Host kernel: 6.6.87.2-microsoft-standard-WSL2
+
+Network
+  PASS  (works)   namespace pw-plant exists
+  PASS  (works)   namespace pw-ops exists
+  PASS  (works)   namespace pw-r1 exists
+  PASS  (works)   namespace pw-r2 exists
+  PASS  (works)   namespace pw-api exists
+  PASS  (works)   namespace pw-db exists
+  PASS  (works)   pw-r1 forwards IPv4
+  PASS  (works)   pw-r2 forwards IPv4
+  PASS  (works)   pw-r1 has static route to app segment
+  PASS  (works)   pw-r2 has static route to plant segment
+  PASS  (works)   plant -> API ping (2 router hops)
+  PASS  (works)   ops -> API ping
+
+Security policy
+  PASS  (works)   plant -> API HTTPS with CA verification
+  PASS  (blocked) plant -> API without trusting the lab CA
+  PASS  (blocked) plant -> API plain HTTP on 8443
+  PASS  (blocked) plant -> Redis tcp/6379 (bypass the API)
+  PASS  (blocked) plant -> Redis ping
+  PASS  (blocked) ops -> Redis tcp/6379
+  PASS  (blocked) plant -> API tcp/22 (port not in policy)
+  PASS  (blocked) plant -> ops zone
+  PASS  (works)   API -> Redis tcp/6379 with password
+  PASS  (blocked) API -> Redis without password
+
+Service
+  PASS  (works)   write + read back through API and Redis
+  PASS  (works)   datastore holds >= 1000 readings
+  PASS  (works)   invalid payload is rejected with 422
+  PASS  (works)   unknown machine returns 404
+
+Result: 26 passed, 0 failed
