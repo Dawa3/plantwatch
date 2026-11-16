@@ -1,7 +1,7 @@
 # PlantWatch: a secured, routed platform for industrial IoT telemetry
 
 CSCI 414/514 Platform Based Development · Final Practical Exam · Option 14 (Industrial IoT and Predictive Maintenance)
-Author: Dawa Sherpa (individual submission) · Date: **[date]**
+Author: Dawa Sherpa (individual submission) · Date: **11/14/2026**
 
 > How to finish this report: run `sudo make experiments`, then replace every
 > **[bracketed]** item with the value from the named evidence file. Section 6
@@ -201,5 +201,4 @@ Environment used: **[Windows version, WSL version, `uname -r`, Ubuntu release]**
 
 ## 9. Contribution statement
 
-Individual project. **[State what you did yourself, and acknowledge any tools or
-assistance you used, following the course policy.]**
+Individual project.
